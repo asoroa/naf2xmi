@@ -125,6 +125,19 @@ def ner(tree, pstate, out):
         tcas.set('end', str(e))
         tcas.set('type', etype)
 
+def chunk(tree, pstate, out):
+    chunks = tree.find("chunks")
+    for chunk in chunks.findall("chunk"):
+        phrase = chunk.get("phrase")
+        tcas = ET.SubElement(out, pstate.qname('ixatypes', 'chunk'))
+        tids, _ = targets(chunk)
+        b, e = pstate.oRange(tids)
+        tcas.set(pstate.qname('xmi', 'id'), pstate.next_id())
+        tcas.set('sofa', pstate.sofaId)
+        tcas.set('begin', str(b))
+        tcas.set('end', str(e))
+        tcas.set('phrase', phrase)
+
 def doc(tree, pstate, out):
     e = str(len(pstate.raw))
     topics = tree.find("topics")
@@ -159,6 +172,7 @@ def main():
         tok(naf, pstate, out)
         pos(naf, pstate, out)
         ner(naf, pstate, out)
+        chunk(naf, pstate, out)
         doc(naf, pstate, out)
         # add sofa
         sofa(pstate, out)
