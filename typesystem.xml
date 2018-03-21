@@ -25,7 +25,7 @@
       <supertypeName>uima.tcas.Annotation</supertypeName>
 	  <features>
         <featureDescription>
-          <name>pos</name>
+          <name>posTag</name>
           <description/>
           <rangeTypeName>uima.cas.String</rangeTypeName>
         </featureDescription>

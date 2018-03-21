@@ -108,7 +108,7 @@ def pos(tree, pstate, out):
         tcas.set('begin', b)
         tcas.set('end', e)
         tcas.set('lemma', lemma)
-        tcas.set('pos', pos)
+        tcas.set('posTag', pos)
         tcas.set('morphofeat', morphofeat)
         ET.tostring(tcas)
 
