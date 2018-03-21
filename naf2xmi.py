@@ -25,10 +25,13 @@ class Parse_state(object):
                        't' : dict()  # terms
         }
         self.ns = Namespaces()
+        self.viewIds = []
         self.id = 0
 
-    def next_id(self):
+    def next_id(self, updateView = True):
         res = str(self.id)
+        if updateView:
+            self.viewIds.append(res)
         self.id += 1
         return res
 
@@ -59,9 +62,9 @@ class Parse_state(object):
             e = max(int(e), int(ee))
         return (b, e)
 
-def parse_naf_fh():
+def parse_naf_fh(fh):
     # NOTE: this does not work if the default coding system of terminal is not UTF8
-    tree = ET.parse(sys.stdin)
+    tree = ET.parse(fh)
     return tree.getroot()
 
 def targets(elem):
@@ -79,7 +82,7 @@ def targets(elem):
         targets.append(tid)
     return (targets, head)
 
-def raw(tree):
+def get_raw(tree):
     relem = tree.find("raw")
     return relem.text
 
@@ -159,37 +162,42 @@ def doc(tree, pstate, out):
 
 def casnull(pstate, out):
     null = ET.SubElement(out, pstate.qname('cas', 'NULL'))
-    null.set(pstate.qname('xmi', 'id'), pstate.next_id())
+    null.set(pstate.qname('xmi', 'id'), pstate.next_id(updateView = False))
 
 def sofa(pstate, out):
     sofa = ET.SubElement(out, pstate.qname('cas', 'Sofa'))
-    pstate.sofaId = pstate.next_id()
+    pstate.sofaId = pstate.next_id(updateView = False)
     sofa.set(pstate.qname('xmi', 'id'), pstate.sofaId)
     sofa.set('sofaNum', "1")
     sofa.set('sofaId', "_initialView")
     sofa.set('mimeType', "text")
     sofa.set('sofaString', pstate.raw)
 
+def view(pstate, out):
+    view = ET.SubElement(out, pstate.qname('cas', 'View'))
+    view.set('sofa', pstate.sofaId)
+    view.set('members', " ".join(pstate.viewIds))
+
 def main():
     try:
-        naf = parse_naf_fh()
-        r = raw(naf)
+        naf = parse_naf_fh(sys.stdin)
+        r = get_raw(naf)
         pstate = Parse_state(r)
         out = ET.Element(pstate.qname('xmi', 'XMI'))
-        # add cas null
+
+        # add layers
         casnull(pstate, out)
-        # add sofa
         sofa(pstate, out)
         tok(naf, pstate, out)
         pos(naf, pstate, out)
         ner(naf, pstate, out)
         chunk(naf, pstate, out)
         doc(naf, pstate, out)
+        view(pstate, out)
+
+        # write
         otree = ET.ElementTree(out)
-        #print(ET.tostring(out))
-        #print(ET.tostring(out).decode("utf-8"))
         otree.write(sys.stdout, encoding = "unicode")
-        #otree.write("kk.xml", encoding = "utf-8")
     except Exception as e:
         msg = "Warning: an exception occured: {}".format(e)
         warnings.warn(msg)
