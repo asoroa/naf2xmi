@@ -124,7 +124,23 @@ def ner(tree, pstate, out):
         tcas.set('begin', str(b))
         tcas.set('end', str(e))
         tcas.set('type', etype)
-        ET.tostring(tcas)
+
+def doc(tree, pstate, out):
+    e = str(len(pstate.raw))
+    topics = tree.find("topics")
+    for topic in topics.findall("topic"):
+        tcas = ET.SubElement(out, pstate.qname('ixatypes', 'topic'))
+        tcas.set(pstate.qname('xmi', 'id'), pstate.next_id())
+        tcas.set('sofa', pstate.sofaId)
+        tcas.set('begin', "0")
+        tcas.set('end', str(e))
+        conf = topic.get("confidence")
+        if conf is not None:
+            conf = "1.0"
+        value = topic.text
+        tcas.set('confidence', conf)
+        tcas.set('value', value)
+
 
 def sofa(pstate, out):
     sofa = ET.SubElement(out, pstate.qname('cas', 'Sofa'))
@@ -143,6 +159,7 @@ def main():
         tok(naf, pstate, out)
         pos(naf, pstate, out)
         ner(naf, pstate, out)
+        doc(naf, pstate, out)
         # add sofa
         sofa(pstate, out)
         otree = ET.ElementTree(out)

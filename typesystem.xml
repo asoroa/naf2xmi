@@ -53,5 +53,22 @@
         </featureDescription>
       </features>
 	</typeDescription>
+	<typeDescription>
+	  <name>ixa2.si.ehu.es.ixa-pipes.types.topic</name>
+      <description/>
+      <supertypeName>uima.tcas.Annotation</supertypeName>
+	  <features>
+        <featureDescription>
+          <name>value</name>
+          <description/>
+          <rangeTypeName>uima.cas.String</rangeTypeName>
+        </featureDescription>
+        <featureDescription>
+          <name>confidence</name>
+          <description/>
+          <rangeTypeName>uima.cas.String</rangeTypeName>
+        </featureDescription>
+      </features>
+	</typeDescription>
   </types>
 </typeSystemDescription>
