@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+
+import sys
 import warnings
 import xml.etree.ElementTree as ET
 
@@ -22,7 +25,7 @@ class Parse_state(object):
                        't' : dict()  # terms
         }
         self.ns = Namespaces()
-        self.id = 1
+        self.id = 0
 
     def next_id(self):
         res = str(self.id)
@@ -57,8 +60,8 @@ class Parse_state(object):
         return (b, e)
 
 def parse_naf_fh():
-    # TODO parse from fs
-    tree = ET.parse('obama.xml')
+    # NOTE: this does not work if the default coding system of terminal is not UTF8
+    tree = ET.parse(sys.stdin)
     return tree.getroot()
 
 def targets(elem):
@@ -154,9 +157,13 @@ def doc(tree, pstate, out):
         tcas.set('confidence', conf)
         tcas.set('value', value)
 
+def casnull(pstate, out):
+    null = ET.SubElement(out, pstate.qname('cas', 'NULL'))
+    null.set(pstate.qname('xmi', 'id'), pstate.next_id())
 
 def sofa(pstate, out):
     sofa = ET.SubElement(out, pstate.qname('cas', 'Sofa'))
+    pstate.sofaId = pstate.next_id()
     sofa.set(pstate.qname('xmi', 'id'), pstate.sofaId)
     sofa.set('sofaNum', "1")
     sofa.set('sofaId', "_initialView")
@@ -169,15 +176,20 @@ def main():
         r = raw(naf)
         pstate = Parse_state(r)
         out = ET.Element(pstate.qname('xmi', 'XMI'))
+        # add cas null
+        casnull(pstate, out)
+        # add sofa
+        sofa(pstate, out)
         tok(naf, pstate, out)
         pos(naf, pstate, out)
         ner(naf, pstate, out)
         chunk(naf, pstate, out)
         doc(naf, pstate, out)
-        # add sofa
-        sofa(pstate, out)
         otree = ET.ElementTree(out)
-        otree.write('kk.xml', encoding = "utf-8")
+        #print(ET.tostring(out))
+        #print(ET.tostring(out).decode("utf-8"))
+        otree.write(sys.stdout, encoding = "unicode")
+        #otree.write("kk.xml", encoding = "utf-8")
     except Exception as e:
         msg = "Warning: an exception occured: {}".format(e)
         warnings.warn(msg)
