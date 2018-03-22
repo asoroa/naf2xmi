@@ -38,12 +38,14 @@ class Parse_state(object):
     def qname(self, ns, name):
         return ET.QName(self.ns.get(ns), name)
 
+    # Note, offsets are stored as ints
     def set_offset(self, id, b, e):
         dmap = self.omaps[id[0]]
         if dmap is None:
             raise Exception("[E] Can not guess map type using id {}".format(id))
-        dmap[id] = [str(b), str(e)]
+        dmap[id] = [b, e]
 
+    # Note, offsets are stored as ints
     def oRange(self, tgtids):
         if len(tgtids) == 0:
             return (0, 0)
@@ -55,11 +57,11 @@ class Parse_state(object):
             raise Exception("[E] undefined id {}".format(tgtids[0]))
         b, e = dmap[tgtids[0]]
         for i in range(len(tgtids) - 1):
-            if tgtids[i] not in dmap:
-                raise Exception("[E] undefined id {}".format(tgtids[i]))
+            if tgtids[i + 1] not in dmap:
+                raise Exception("[E] undefined id {}".format(tgtids[i + 1]))
             bb, ee = dmap[tgtids[i + 1]]
-            b = min(int(b), int(bb))
-            e = max(int(e), int(ee))
+            b = min(b, bb)
+            e = max(e, ee)
         return (b, e)
 
 def parse_naf_fh(fh):
@@ -97,7 +99,6 @@ def tok(tree, pstate, out):
         tcas.set('sofa', pstate.sofaId)
         tcas.set('begin', str(b))
         tcas.set('end', str(e))
-        ET.tostring(tcas)
 
 def pos(tree, pstate, out):
     terms = tree.find("terms")
@@ -111,12 +112,11 @@ def pos(tree, pstate, out):
         tcas = ET.SubElement(out, pstate.qname('ixatypes', 'lexUnit'))
         tcas.set(pstate.qname('xmi', 'id'), pstate.next_id())
         tcas.set('sofa', pstate.sofaId)
-        tcas.set('begin', b)
-        tcas.set('end', e)
+        tcas.set('begin', str(b))
+        tcas.set('end', str(e))
         tcas.set('lemma', lemma)
         tcas.set('posTag', pos)
         tcas.set('morphofeat', morphofeat)
-        ET.tostring(tcas)
 
 def ner(tree, pstate, out):
     entities = tree.find("entities")
